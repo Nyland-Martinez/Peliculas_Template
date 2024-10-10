@@ -1,4 +1,4 @@
-const apiKey = 'YOUR API KEY'; // Reemplaza con tu clave API
+const apiKey = '070db3fe80f35e6264772fcc90de4da5'; 
 const apiUrl = 'https://api.themoviedb.org/3';
 const movieList = document.getElementById('movies');
 const movieDetails = document.getElementById('movie-details');
@@ -14,8 +14,10 @@ let favoriteMovies = JSON.parse(localStorage.getItem('favorites')) || [];
 async function fetchPopularMovies() {
     try {
         const response = await fetch(`${apiUrl}/movie/popular?api_key=${apiKey}`); // Realiza una solicitud GET a la API
+        if (!response.ok) throw new Error('Failed to fetch popular movies');
+
         const p_movies = await response.json(); // Convierte la respuesta a JSON
-        displayMovies(p_movies); // y llama a displayMovies con los resultados
+        displayMovies(p_movies.results); // y llama a displayMovies con los resultados
     } catch (error) {
         console.error('Error fetching popular movies:', error);
     }
@@ -38,18 +40,18 @@ function displayMovies(movies) {
 // Show movie details
 async function showMovieDetails(movieId) {
     try {
-        // tu codigo aqui: realiza una solicitud para obtener los detalles de la película
         const response = await fetch(`${apiUrl}/movie/${movieId}?api_key=${apiKey}`);
+        if (!response.ok) throw new Error('Failed to fetch movie details');
+
         const movie = await response.json();
-        selectedMovieId = movie.id; // Guarda el ID de la película seleccionada
-        // y actualiza el contenedor de detalles con la información de la película
-        movieDetails.innerHTML = `
+        detailsContainer.innerHTML = `
             <h3>${movie.title}</h3>
             <p>${movie.overview}</p>
             <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}">
             <p><strong>Release date:</strong> ${movie.release_date}</p>
         `;
-        detailsContainer.style.display = 'block'; // Muestra el contenedor de detalles
+        selectedMovieId = movie.id;
+        movieDetails.classList.remove('hidden'); // Elimina la clase 'hidden'
     } catch (error) {
         console.error('Error fetching movie details:', error);
     }
@@ -60,10 +62,15 @@ searchButton.addEventListener('click', async () => {
     const query = searchInput.value;
     if (query) {
         try {
-            // tu codigo aqui: realiza una solicitud para buscar películas
             const response = await fetch(`${apiUrl}/search/movie?query=${encodeURIComponent(query)}&api_key=${apiKey}`);
+            if (!response.ok) throw new Error('Failed to search movies');
+
             const movieSearched = await response.json();
-            displayMovies(movieSearched);  // y llama a displayMovies con los resultados de la búsqueda
+            if (movieSearched.results.length > 0) {
+                displayMovies(movieSearched.results);  // y llama a displayMovies con los resultados de la búsqueda
+            } else {
+                movieList.innerHTML = `<p>No se encontraron películas para "${query}".</p>`;
+            }        
         } catch (error) {
             console.error('Error searching movies:', error);
         }
